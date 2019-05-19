@@ -4,7 +4,10 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,7 +32,7 @@ import com.google.android.gms.tasks.Task;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MainActivity extends AppCompatActivity implements MySMSBroadcastReceiver.OTPReceiveListener {
+public class MainActivity extends AppCompatActivity implements MySMSBroadcastReceiver.OTPReceiveListener,OtpFragment.OnFragmentInteractionListener,RegisterFragment.OnFragmentInteractionListener {
 
     private static final int RESOLVE_HINT = 2;
     private String TAG="flow";
@@ -37,8 +40,15 @@ public class MainActivity extends AppCompatActivity implements MySMSBroadcastRec
     private GoogleApiClient apiClient;
     TextView textView;
     EditText phoneView;
+    Button btn_next;
     Button btn_resend;
     Button btn_verify;
+
+    FragmentManager fragmentManager;
+    FragmentTransaction fragmentTransaction;
+    OtpFragment otpFragment;
+    RegisterFragment registerFragment;
+
     MySMSBroadcastReceiver mySMSBroadcastReceiver;
     private GoogleApiClient mCredentialsApiClient;
 
@@ -47,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements MySMSBroadcastRec
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.i(TAG, "onCreate: ");
-        textView= findViewById(R.id.code);
+        /*textView= findViewById(R.id.code);
         phoneView = findViewById(R.id.phonenumber);
         btn_resend = findViewById(R.id.resend);
         btn_verify = findViewById(R.id.btn_verify);
@@ -63,6 +73,13 @@ public class MainActivity extends AppCompatActivity implements MySMSBroadcastRec
                 verifyCode(view);
             }
         });
+*/
+        fragmentManager=getSupportFragmentManager();
+        fragmentTransaction=fragmentManager.beginTransaction();
+        registerFragment=new RegisterFragment();
+        fragmentTransaction.add(R.id.id_frame_layout, registerFragment);
+        fragmentTransaction.commit();
+
 
         AppSignatureHashHelper appSignatureHashHelper = new AppSignatureHashHelper(this);
         // This code requires one time to get Hash keys do comment and share key
@@ -72,12 +89,12 @@ public class MainActivity extends AppCompatActivity implements MySMSBroadcastRec
                 .addApi(Auth.CREDENTIALS_API)
                 .build();
 
-        requestHint();
-        startSmsListener();
+     //   requestHint();
+      //  startSmsListener();
 
-        String sample="<#> code: 12345678 \n" +
+        /*String sample="<#> code: 12345678 \n" +
                 "    xl3ZdlY/chY";
-        Log.i("hash", "onCreate: "+parseCode(sample));
+        Log.i("hash", "onCreate: "+parseCode(sample));*/
 
     }
 
@@ -99,13 +116,14 @@ public class MainActivity extends AppCompatActivity implements MySMSBroadcastRec
     }
 
 
-    public void reSendCode(View view){
+    public void reSendCode(){
         //send request to server for otp
         Log.i(TAG, "reSendCode: ");
+        startSmsListener();
 
     }
     
-    public void verifyCode(View view){
+    public void verifyCode(){
         Log.i(TAG, "verifyCode: ");
     }
 
@@ -159,7 +177,8 @@ public class MainActivity extends AppCompatActivity implements MySMSBroadcastRec
                 Credential credential = data.getParcelableExtra(Credential.EXTRA_KEY);
                 // credential.getId();  <-- will need to process phone number string
                 Log.i("hash", "onActivityResult: "+credential.getId());
-                phoneView.setText(credential.getId());
+                //phoneView.setText(credential.getId());
+                registerFragment.setMobile(credential.getId());
             }else if (resultCode == RESULT_CANCELED){
                 Log.i("hash", "onActivityResult: cancelled");
             }
@@ -178,19 +197,22 @@ public class MainActivity extends AppCompatActivity implements MySMSBroadcastRec
         return code;
     }
 
-
     @Override
     public void onOTPReceived(String otp) {
         Log.i(TAG, "onOTPReceived: "+otp);
         Toast.makeText(this, "otp: "+otp, Toast.LENGTH_SHORT).show();
         String code=parseCode(otp);
         Log.i(TAG, "onOTPReceived: code "+code);
-        textView.setText(code);
+        if(!code.equals("")) {
+            otpFragment.setOtpCode(code);
+        }
+        //textView.setText(code);
     }
 
     @Override
     public void onOTPTimeOut() {
         Log.i(TAG, "onOTPTimeOut: ");
+
     }
 
     @Override
@@ -199,6 +221,25 @@ public class MainActivity extends AppCompatActivity implements MySMSBroadcastRec
         Log.i(TAG, "onDestroy: ");
         if ( mySMSBroadcastReceiver!= null) {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(mySMSBroadcastReceiver);
+        }
+    }
+
+    @Override
+    public void onFragmentInteraction(String uri) {
+        Log.i(TAG, "onFragmentInteraction: "+uri);
+        if (uri.equals("proceed")){
+            fragmentTransaction=fragmentManager.beginTransaction();
+            otpFragment=new OtpFragment();
+            fragmentTransaction.replace(R.id.id_frame_layout, otpFragment);
+            fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.commit();
+            startSmsListener();
+        }else if (uri.equals("verify_otp")){
+            verifyCode();
+        }else if (uri.equals("resend")){
+            reSendCode();
+        }else if (uri.equals("get_number")){
+            requestHint();
         }
     }
 }

@@ -2,4 +2,18 @@
     <string name="app_name">SmsRetrieve</string>
     <string name="resend">Resend</string>
     <string name="verify">Verify</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="email_address">Email</string>
+    <string name="confirm_email_address">Confirm Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="btn_next">Next</string>
+    <string name="mobile_number">Mobile number</string>
+    <string name="otp_desc">We will send an SMS with a confirmation code to this number</string>
+    <string name="sms_desc">We\'ve sent an SMS with an activation code to:</string>
+    <string name="otp_manual_desc">Please enter activation code manually</string>
+    <string name="or">OR</string>
+    <string name="otp">OTP code</string>
 </resources>
